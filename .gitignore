@@ -1,0 +1,17 @@
+# VS Code settings
+.vscode/
+
+# Compiled files
+*.o
+*.exe
+main
+TestingMain
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*~
+*.tmp
+*.swp
