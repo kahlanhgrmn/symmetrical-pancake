@@ -7,6 +7,12 @@
 #include "ExtraCheese.h"
 #include "StuffedCrust.h"
 #include "PizzaOrders.h"
+#include "Observer.h"
+#include "Menus.h"
+#include "PizzaMenu.h"
+#include "SpecialsMenu.h"
+#include "Customer.h"
+#include "Website.h"
 #include <iostream>
 #include <vector>
 
@@ -659,6 +665,290 @@ void testPizzaOrdersIntegration() {
 }
 
 
+
+void testBasicObserverPattern() {
+    std::cout << "\n=== Testing Basic Observer Pattern ===" << std::endl;
+    
+    // creating subjects (menus)
+    PizzaMenu* mainMenu = new PizzaMenu("Romeo's Main Menu");
+    SpecialsMenu* specials = new SpecialsMenu("Weekly Specials");
+    
+    // creating observers
+    Customer* customer1 = new Customer("Mario Rossi", "082-555-1234");
+    Customer* customer2 = new Customer("Lucia Ferrari", "083-555-5678");
+    Website* website = new Website();
+    
+    // register observers with menus
+    mainMenu->addObserver(customer1);
+    mainMenu->addObserver(customer2);
+    mainMenu->addObserver(website);
+    
+    specials->addObserver(customer1);
+    specials->addObserver(customer2);
+    specials->addObserver(website);
+    
+    std::cout << "\n--- Adding pizzas to main menu ---" << std::endl;
+    Pizza* newPizza1 = new BasePizza(ToppingGroup::createPepperoniPizza());
+    Pizza* newPizza2 = new BasePizza(ToppingGroup::createVegetarianPizza());
+    
+    mainMenu->addPizza(newPizza1);
+    mainMenu->addPizza(newPizza2);
+    
+    std::cout << "\n--- Adding special offers ---" << std::endl;
+    Pizza* specialPizza1 = new BasePizza(ToppingGroup::createMeatLoversPizza());
+    Pizza* specialPizza2 = new BasePizza(ToppingGroup::createVegetarianDeluxePizza());
+    
+    specials->addSpecialOffer(specialPizza1, "20% off today!");
+    specials->addSpecialOffer(specialPizza2, "Buy one, get one half price!");
+    
+    std::cout << "\n--- Displaying notifications ---" << std::endl;
+    customer1->displayNotifications();
+    customer2->displayNotifications();
+    website->displayUpdates();
+    
+    // Cleanup - the first two will cleanup pizzas automatically
+    delete mainMenu;
+    delete specials;
+    delete customer1;
+    delete customer2;
+    delete website;
+    
+    std::cout << "Basic Observer Pattern test complete" << std::endl;
+}
+
+void testObserverRegistrationAndRemoval() {
+    std::cout << "\n=== Testing Observer Registration and Removal ===" << std::endl;
+    
+    PizzaMenu* menu = new PizzaMenu("Test Menu");
+    
+    Customer* customer1 = new Customer("Test Customer 1");
+    Customer* customer2 = new Customer("Test Customer 2");
+    Customer* customer3 = new Customer("Test Customer 3");
+    
+    // registering observers
+    menu->addObserver(customer1);
+    menu->addObserver(customer2);
+    menu->addObserver(customer3);
+    
+    std::cout << "--- Registered 3 observers ---" << std::endl;
+    
+    // adding a pizza (notify all 3 observers)
+    Pizza* pizza = new BasePizza(ToppingGroup::createPepperoniPizza());
+    menu->addPizza(pizza);
+    
+    std::cout << "\n--- Removing one observer ---" << std::endl;
+    menu->removeObserver(customer2);
+    
+    // adding another pizza (notify the two left)
+    Pizza* pizza2 = new BasePizza(ToppingGroup::createVegetarianPizza());
+    menu->addPizza(pizza2);
+    
+    std::cout << "\nFinal notification counts: " << std::endl;
+    std::cout << "Customer 1 notifications: " << customer1->getNotifications().size() << std::endl;
+    std::cout << "Customer 2 notifications: " << customer2->getNotifications().size() << std::endl;
+    std::cout << "Customer 3 notifications: " << customer3->getNotifications().size() << std::endl;
+    
+    // Cleanup
+    delete menu;
+    delete customer1;
+    delete customer2;
+    delete customer3;
+    
+    std::cout << "Observer registration and removal test completed" << std::endl;
+}
+
+void testPizzaMenuOperations() {
+    std::cout << "\n=== Testing Pizza Menu Operations ===" << std::endl;
+    
+    PizzaMenu* menu = new PizzaMenu("Test Pizza Menu");
+    Customer* customer = new Customer("Test Customer");
+    Website* website = new Website();
+    
+    menu->addObserver(customer);
+    menu->addObserver(website);
+    
+    // create various pizzas
+    Pizza* pepperoni = new BasePizza(ToppingGroup::createPepperoniPizza());
+    Pizza* decorated = new ExtraCheese(new BasePizza(ToppingGroup::createVegetarianPizza()));
+    
+    std::cout << "\nAdding pizzas to menu" << std::endl;
+    menu->addPizza(pepperoni);
+    menu->addPizza(decorated);
+    
+    std::cout << "\n--- Displaying menu ---" << std::endl;
+    menu->displayMenu();
+    
+    std::cout << "\n--- Removing a pizza ---" << std::endl;
+    menu->removePizza(pepperoni);
+    
+    std::cout << "\n--- Final menu state ---" << std::endl;
+    menu->displayMenu();
+    
+    // Cleanup
+    delete menu;
+    delete customer;
+    delete website;
+    
+    std::cout << "Pizza Menu operations test completed" << std::endl;
+}
+
+void testSpecialsMenuOperations() {
+    std::cout << "\n=== Testing Specials Menu Operations ===" << std::endl;
+    
+    SpecialsMenu* specials = new SpecialsMenu("Tuesday Specials");
+    Customer* loyalCustomer = new Customer("Loyal Customer", "084-123-4567");
+    Website* website = new Website();
+    
+    specials->addObserver(loyalCustomer);
+    specials->addObserver(website);
+    
+    // creating special offers pizza
+    Pizza* meatLovers = new BasePizza(ToppingGroup::createMeatLoversPizza());
+    Pizza* vegDeluxe = new ExtraCheese(new StuffedCrust(
+        new BasePizza(ToppingGroup::createVegetarianDeluxePizza())
+    ));
+    
+    std::cout << "\n--- Adding special offers ---" << std::endl;
+    specials->addSpecialOffer(meatLovers, "30% off for Meat Lovers Tuesday");
+    specials->addSpecialOffer(vegDeluxe, "Free delivery on fully loaded veggie pizza");
+    
+    std::cout << "\n--- Displaying specials menu ---" << std::endl;
+    specials->displaySpecialsMenu();
+    
+    std::cout << "\n--- Ending a special offer ---" << std::endl;
+    specials->removeSpecialOffer(meatLovers);
+    
+    std::cout << "\n--- Final specials menu ---" << std::endl;
+    specials->displaySpecialsMenu();
+    
+    // check notifications
+    std::cout << "\n--- Customer notifications ---" << std::endl;
+    loyalCustomer->displayNotifications();
+    
+    // Cleanup
+    delete specials;
+    delete loyalCustomer;
+    delete website;
+    
+    std::cout << "Specials Menu operations test completed!" << std::endl;
+}
+
+void testMultipleMenusAndObservers() {
+    std::cout << "\n=== Testing Multiple Menus and Observers ===" << std::endl;
+    
+    // multiple menus
+    PizzaMenu* mainMenu = new PizzaMenu("Main Menu");
+    PizzaMenu* kidsMenu = new PizzaMenu("Kids Menu");
+    SpecialsMenu* weeklySpecials = new SpecialsMenu("Weekly Specials");
+    SpecialsMenu* holidaySpecials = new SpecialsMenu("Holiday Specials");
+    
+    // multiple observers
+    Customer* family = new Customer("The Rossi Family", "082-111-2222");
+    Customer* student = new Customer("University Student", "083-333-4444");
+    Website* mainWebsite = new Website("Romeo's Main Site");
+    Website* mobileApp = new Website("Romeo's Mobile App", "app.romeospizza.co.za");
+    
+    // complex observer registration
+    mainMenu->addObserver(family);
+    mainMenu->addObserver(student);
+    mainMenu->addObserver(mainWebsite);
+    
+    kidsMenu->addObserver(family); // Only family that wants kids menu
+    kidsMenu->addObserver(mainWebsite);
+    
+    weeklySpecials->addObserver(family);
+    weeklySpecials->addObserver(student);
+    weeklySpecials->addObserver(mainWebsite);
+    weeklySpecials->addObserver(mobileApp);
+    
+    holidaySpecials->addObserver(family);
+    holidaySpecials->addObserver(mobileApp);
+    
+    std::cout << "\n--- Adding items to different menus ---" << std::endl;
+    
+    // Main menu updates
+    mainMenu->addPizza(new BasePizza(ToppingGroup::createPepperoniPizza()));
+    
+    // Kids menu updates
+    Pizza* kidsPizza = new BasePizza(new ToppingGroup("Mini Margherita"));
+    kidsMenu->addPizza(kidsPizza);
+    
+    // Weekly specials
+    weeklySpecials->addSpecialOffer(
+        new BasePizza(ToppingGroup::createMeatLoversPizza()), 
+        "Monday Meat Madness - 25% off!"
+    );
+    
+    // Holiday specials
+    holidaySpecials->addSpecialOffer(
+        new ExtraCheese(new StuffedCrust(new BasePizza(ToppingGroup::createVegetarianDeluxePizza()))),
+        "Heritage Day Special. R50 off family size"
+    );
+    
+    std::cout << "\n--- Notification Summary ---" << std::endl;
+    std::cout << "Family notifications: " << family->getNotifications().size() << std::endl;
+    std::cout << "Student notifications: " << student->getNotifications().size() << std::endl;
+    std::cout << "Main website updates: " << mainWebsite->getUpdates().size() << std::endl;
+    std::cout << "Mobile app updates: " << mobileApp->getUpdates().size() << std::endl;
+    
+    // Cleanup
+    delete mainMenu;
+    delete kidsMenu;
+    delete weeklySpecials;
+    delete holidaySpecials;
+    delete family;
+    delete student;
+    delete mainWebsite;
+    delete mobileApp;
+    
+    std::cout << "Multiple Menus and Observers test completed!" << std::endl;
+}
+
+void testObserverPatternWithPizzaOrders() {
+    std::cout << "\n=== Testing Observer Pattern Integration with PizzaOrders ===" << std::endl;
+    
+    // create menus
+    PizzaMenu* menu = new PizzaMenu("Romeo's Complete Menu");
+    SpecialsMenu* specials = new SpecialsMenu("Daily Specials");
+    
+    // create observers
+    Customer* customer = new Customer("Integration Test Customer");
+    Website* website = new Website();
+    
+    menu->addObserver(customer);
+    menu->addObserver(website);
+    specials->addObserver(customer);
+    specials->addObserver(website);
+    
+    // create pizzas using PizzaOrders class
+    PizzaOrders orderSystem(3001, "Menu Management System");
+    
+    // create pizzas and add to menus
+    Pizza* pepperoni = orderSystem.createPepperoniPizza(true, false);
+    Pizza* vegDeluxe = orderSystem.createVegetarianDeluxePizza(false, true);
+    Pizza* custom = orderSystem.createCustomPizza({"Mushrooms", "Olives", "Feta Cheese"});
+    
+    std::cout << "\n--- Adding PizzaOrders-created pizzas to menus ---" << std::endl;
+    menu->addPizza(pepperoni);
+    menu->addPizza(vegDeluxe);
+    
+    specials->addSpecialOffer(custom, "Chef's Special - Limited time only!");
+    
+    std::cout << "\n--- Displaying final state ---" << std::endl;
+    menu->displayMenu();
+    specials->displaySpecialsMenu();
+    
+    // don't add these pizzas to the order system since they're now owned by the menus
+    // menus will handle cleanup
+    
+    // Cleanup - these will cleanup the pizzas
+    delete menu;
+    delete specials;
+}
+
+
+
+
 void functions(){
 cout << "Romeo's Pizza - Complete System Testing" << endl;
     cout << "=======================================" << endl << endl;
@@ -696,6 +986,18 @@ cout << "Romeo's Pizza - Complete System Testing" << endl;
         testCopyConstructorAndAssignment();
         testComplexOrders();
         testOrderDisplayMethods();
+
+        
+        cout << endl << "OBSERVER PATTERN TESTS" << endl;
+        cout << "======================" << endl;
+        
+        // === OBSERVER PATTERN TESTS ===
+        testBasicObserverPattern();
+        testObserverRegistrationAndRemoval();
+        testPizzaMenuOperations();
+        testSpecialsMenuOperations();
+        testMultipleMenusAndObservers();
+        testObserverPatternWithPizzaOrders();
         
         cout << endl << "INTEGRATION TESTS" << endl;
         cout << "=================" << endl;
@@ -801,6 +1103,8 @@ void testCloneBasePizza() {
     delete cloned;
     cout << "Deleted cloned" << endl;
 }
+
+
 
 void valgrind(){
     //testCopyConstructor2();
