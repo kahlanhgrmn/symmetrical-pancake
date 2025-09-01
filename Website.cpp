@@ -63,6 +63,7 @@ void Website::displayUpdates() const{
 }
 
 void Website::publishUpdate(const std::string& update){
+    (void)update;
     std::cout << "Published to website backend database" << std::endl;
     std::cout << "Cache cleared for updated pages" << std::endl;
 }

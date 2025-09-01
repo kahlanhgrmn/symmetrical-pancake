@@ -13,6 +13,7 @@
 #include "SpecialsMenu.h"
 #include "Customer.h"
 #include "Website.h"
+#include "ConcreteStates.h"
 #include <iostream>
 #include <vector>
 
@@ -780,12 +781,14 @@ void testPizzaMenuOperations() {
     
     std::cout << "\n--- Removing a pizza ---" << std::endl;
     menu->removePizza(pepperoni);
+    // FIXED: Delete the pizza after removing it from menu since menu no longer owns it
+    delete pepperoni;
     
     std::cout << "\n--- Final menu state ---" << std::endl;
     menu->displayMenu();
     
     // Cleanup
-    delete menu;
+    delete menu;  // This will delete remaining pizzas (decorated)
     delete customer;
     delete website;
     
@@ -817,6 +820,8 @@ void testSpecialsMenuOperations() {
     
     std::cout << "\n--- Ending a special offer ---" << std::endl;
     specials->removeSpecialOffer(meatLovers);
+    // FIXED: Delete the pizza after removing it from specials since specials no longer owns it
+    delete meatLovers;
     
     std::cout << "\n--- Final specials menu ---" << std::endl;
     specials->displaySpecialsMenu();
@@ -826,7 +831,7 @@ void testSpecialsMenuOperations() {
     loyalCustomer->displayNotifications();
     
     // Cleanup
-    delete specials;
+    delete specials;  // This will delete remaining pizzas (vegDeluxe)
     delete loyalCustomer;
     delete website;
     
@@ -944,9 +949,269 @@ void testObserverPatternWithPizzaOrders() {
     // Cleanup - these will cleanup the pizzas
     delete menu;
     delete specials;
+    delete customer;  // FIXED: Added missing cleanup
+    delete website;   // FIXED: Added missing cleanup
+    
+    std::cout << "Observer Pattern with PizzaOrders test completed!" << std::endl;
+}
+// Add these functions to your PizzaOrders.cpp file or create a separate test file
+
+
+
+
+// Test function 1: Complete order workflow
+void testCompleteOrderWorkflow() {
+    std::cout << "\n=== TESTING COMPLETE ORDER WORKFLOW ===" << std::endl;
+    
+    PizzaOrders order(12345, "John Doe");
+    order.setState(new OrderingState()); // Initialize state
+    
+    std::cout << "\n1. Starting in Ordering State:" << std::endl;
+    order.displayStateInfo();
+    
+    // Add some pizzas
+    std::cout << "\n2. Adding pizzas to order:" << std::endl;
+    Pizza* pizza1 = order.createPepperoniPizza(true, false);
+    Pizza* pizza2 = order.createVegetarianPizza(false, true);
+    order.addPizza(pizza1);
+    order.addPizza(pizza2);
+    order.performAddPizza(); // Test state-aware add
+    
+    // Try to pay before confirming (should fail)
+    std::cout << "\n3. Trying to pay before confirming:" << std::endl;
+    order.performPayOrder();
+    
+    // Confirm order
+    std::cout << "\n4. Confirming order:" << std::endl;
+    order.performConfirmOrder();
+    order.displayStateInfo();
+    
+    // Try to add pizza after confirming (should fail)
+    std::cout << "\n5. Trying to add pizza after confirming:" << std::endl;
+    order.performAddPizza();
+    
+    // Pay for order
+    std::cout << "\n6. Paying for order:" << std::endl;
+    order.performPayOrder();
+    order.displayStateInfo();
+    
+    // Prepare order
+    std::cout << "\n7. Preparing order:" << std::endl;
+    order.performPrepareOrder();
+    order.displayStateInfo();
+    
+    // Deliver order
+    std::cout << "\n8. Delivering order:" << std::endl;
+    order.performDeliverOrder();
+    order.displayStateInfo();
+    
+    // Complete order
+    std::cout << "\n9. Completing order:" << std::endl;
+    order.performCompleteOrder();
+    order.displayStateInfo();
+    
+    // Try to modify completed order (should fail)
+    std::cout << "\n10. Trying to modify completed order:" << std::endl;
+    order.performAddPizza();
+    order.performCancelOrder();
+    
+    std::cout << "\n=== COMPLETE WORKFLOW TEST FINISHED ===" << std::endl;
 }
 
+// Test function 2: Order cancellation at different stages
+void testOrderCancellation() {
+    std::cout << "\n=== TESTING ORDER CANCELLATION ===" << std::endl;
+    
+    // Test 1: Cancel during ordering
+    std::cout << "\n1. Cancel during Ordering state:" << std::endl;
+    PizzaOrders order1(12346, "Jane Smith");
+    order1.setState(new OrderingState());
+    Pizza* pizza = order1.createMeatLoversPizza();
+    order1.addPizza(pizza);
+    order1.displayStateInfo();
+    order1.performCancelOrder();
+    order1.displayStateInfo();
+    
+    // Test 2: Cancel after payment
+    std::cout << "\n2. Cancel after payment:" << std::endl;
+    PizzaOrders order2(12347, "Bob Johnson");
+    order2.setState(new OrderingState());
+    Pizza* pizza2 = order2.createVegetarianDeluxePizza();
+    order2.addPizza(pizza2);
+    order2.performConfirmOrder();
+    order2.performPayOrder();
+    order2.displayStateInfo();
+    order2.performCancelOrder();
+    order2.displayStateInfo();
+    
+    // Test 3: Cancel during delivery
+    std::cout << "\n3. Cancel during delivery:" << std::endl;
+    PizzaOrders order3(12348, "Alice Brown");
+    order3.setState(new DeliveringState()); // Simulate order in delivery
+    order3.displayStateInfo();
+    order3.performCancelOrder();
+    order3.displayStateInfo();
+    
+    std::cout << "\n=== CANCELLATION TEST FINISHED ===" << std::endl;
+}
 
+// Test function 3: Invalid operations
+void testInvalidOperations() {
+    std::cout << "\n=== TESTING INVALID OPERATIONS ===" << std::endl;
+    
+    PizzaOrders order(12349, "Test Customer");
+    
+    // Test operations in different states
+    std::cout << "\n1. Testing operations in Confirmed state:" << std::endl;
+    order.setState(new ConfirmedState());
+    order.displayStateInfo();
+    order.performAddPizza();        // Should fail
+    order.performRemovePizza(0);    // Should fail
+    order.performPrepareOrder();    // Should fail
+    order.performDeliverOrder();    // Should fail
+    
+    std::cout << "\n2. Testing operations in Preparing state:" << std::endl;
+    order.setState(new PreparingState());
+    order.displayStateInfo();
+    order.performAddPizza();        // Should fail
+    order.performPayOrder();        // Should show already paid
+    order.performCompleteOrder();   // Should fail
+    
+    std::cout << "\n3. Testing operations in Completed state:" << std::endl;
+    order.setState(new CompletedState());
+    order.displayStateInfo();
+    order.performAddPizza();        // Should fail
+    order.performConfirmOrder();    // Should show already completed
+    order.performCancelOrder();     // Should fail
+    
+    std::cout << "\n=== INVALID OPERATIONS TEST FINISHED ===" << std::endl;
+}
+
+// Test function 4: Order state transitions with order display
+void testOrderStateTransitionsWithDisplay() {
+    std::cout << "\n=== TESTING STATE TRANSITIONS WITH ORDER DISPLAY ===" << std::endl;
+    
+    PizzaOrders order(12350, "Demo Customer");
+    order.setState(new OrderingState());
+    
+    // Add pizzas and show order
+    std::cout << "\n1. Adding pizzas in Ordering state:" << std::endl;
+    Pizza* pizza1 = order.createPepperoniPizza(true, true);
+    Pizza* pizza2 = order.createVegetarianPizza(false, false);
+    order.addPizza(pizza1);
+    order.addPizza(pizza2);
+    order.displayOrder();
+    order.displayStateInfo();
+    
+    // Confirm and show state change
+    std::cout << "\n2. Confirming order:" << std::endl;
+    order.performConfirmOrder();
+    order.displayStateInfo();
+    
+    // Pay and show state change
+    std::cout << "\n3. Processing payment:" << std::endl;
+    order.performPayOrder();
+    order.displayStateInfo();
+    order.displayDiscountInfo();
+    
+    // Prepare
+    std::cout << "\n4. Starting preparation:" << std::endl;
+    order.performPrepareOrder();
+    order.displayStateInfo();
+    
+    // Deliver
+    std::cout << "\n5. Starting delivery:" << std::endl;
+    order.performDeliverOrder();
+    order.displayStateInfo();
+    
+    // Complete
+    std::cout << "\n6. Completing order:" << std::endl;
+    order.performCompleteOrder();
+    order.displayStateInfo();
+    order.displayOrderSummary();
+    
+    std::cout << "\n=== STATE TRANSITIONS WITH DISPLAY TEST FINISHED ===" << std::endl;
+}
+
+// Test function 5: Edge cases and error handling
+void testEdgeCases() {
+    std::cout << "\n=== TESTING EDGE CASES ===" << std::endl;
+    
+    PizzaOrders order(12351, "Edge Case Customer");
+    order.setState(new OrderingState());
+    
+    // Try to confirm empty order
+    std::cout << "\n1. Trying to confirm empty order:" << std::endl;
+    order.displayStateInfo();
+    order.performConfirmOrder(); // Should fail
+    order.displayStateInfo();    // Should still be in Ordering
+    
+    // Add pizza then confirm
+    std::cout << "\n2. Adding pizza then confirming:" << std::endl;
+    Pizza* pizza = order.createCustomPizza({"Pepperoni", "Mushrooms", "Olives"}, true, false);
+    order.addPizza(pizza);
+    order.performConfirmOrder(); // Should succeed
+    order.displayStateInfo();
+    
+    // Try multiple payments
+    std::cout << "\n3. Trying multiple payments:" << std::endl;
+    order.performPayOrder();     // First payment - should work
+    order.performPayOrder();     // Second payment - should show already paid
+    
+    // Try invalid removePizza index
+    std::cout << "\n4. Testing invalid remove operations:" << std::endl;
+    order.performRemovePizza(99); // Invalid index in wrong state
+    
+    std::cout << "\n=== EDGE CASES TEST FINISHED ===" << std::endl;
+}
+
+// Main test function that calls all the others
+void statePattern() {
+    std::cout << "\n" << std::string(60, '=') << std::endl;
+    std::cout << "           PIZZA ORDER STATE PATTERN TESTING" << std::endl;
+    std::cout << std::string(60, '=') << std::endl;
+    
+    // Run all test functions
+    testCompleteOrderWorkflow();
+    testOrderCancellation();
+    testInvalidOperations();
+    testOrderStateTransitionsWithDisplay();
+    testEdgeCases();
+    
+    std::cout << "\n" << std::string(60, '=') << std::endl;
+    std::cout << "           ALL STATE PATTERN TESTS COMPLETED" << std::endl;
+    std::cout << std::string(60, '=') << std::endl;
+}
+
+void observerPatterns(){
+        // === OBSERVER PATTERN TESTS ===
+        testBasicObserverPattern();
+        testObserverRegistrationAndRemoval();
+        testPizzaMenuOperations();
+        testSpecialsMenuOperations();
+        testMultipleMenusAndObservers();
+         testObserverPatternWithPizzaOrders();
+}
+
+void pizzaOrderFunctions(){
+        // === PIZZAORDERS PATTERN TESTS ===
+        testPizzaOrdersBasic();
+        testPizzaCreationMethods();
+        testCustomPizzaCreation();
+        testOrderManagement();
+        testCopyConstructorAndAssignment();
+        testComplexOrders();
+        testOrderDisplayMethods();
+}
+
+void decoratorPattern(){
+        // === DECORATOR PATTERN TESTS ===
+        testBasicDecorators();
+        testDecoratorChaining();
+        testAllPizzasWithDecorators();
+        testDecoratorPricing();
+        testDecoratorEdgeCases();
+}
 
 
 void functions(){
@@ -968,36 +1233,22 @@ cout << "Romeo's Pizza - Complete System Testing" << endl;
         cout << endl << "DECORATOR PATTERN TESTS" << endl;
         cout << "======================" << endl;
         
-        // === DECORATOR PATTERN TESTS ===
-        testBasicDecorators();
-        testDecoratorChaining();
-        testAllPizzasWithDecorators();
-        testDecoratorPricing();
-        testDecoratorEdgeCases();
+        decoratorPattern();
         
         cout << endl << "PIZZAORDERS CLASS TESTS" << endl;
         cout << "======================" << endl;
         
-        // === PIZZAORDERS PATTERN TESTS ===
-        testPizzaOrdersBasic();
-        testPizzaCreationMethods();
-        testCustomPizzaCreation();
-        testOrderManagement();
-        testCopyConstructorAndAssignment();
-        testComplexOrders();
-        testOrderDisplayMethods();
+        pizzaOrderFunctions();
 
         
         cout << endl << "OBSERVER PATTERN TESTS" << endl;
         cout << "======================" << endl;
+
+        observerPatterns();
+
+        statePattern();
         
-        // === OBSERVER PATTERN TESTS ===
-        testBasicObserverPattern();
-        testObserverRegistrationAndRemoval();
-        testPizzaMenuOperations();
-        testSpecialsMenuOperations();
-        testMultipleMenusAndObservers();
-        testObserverPatternWithPizzaOrders();
+
         
         cout << endl << "INTEGRATION TESTS" << endl;
         cout << "=================" << endl;
@@ -1116,6 +1367,7 @@ void valgrind(){
 int main() {
     
     functions();
+    //statePattern();
 
     //valgrind();
     

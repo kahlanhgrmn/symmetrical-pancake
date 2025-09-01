@@ -1,19 +1,23 @@
 #include "PizzaOrders.h"
 #include "Topping.h"
+#include "ConcreteStates.h"
 #include <iostream>
 
 // Constructors and Destructor
 PizzaOrders::PizzaOrders() : currentState(nullptr), discountStrat(nullptr), orderNum(0), orderName("Guest") {
+    currentState = new OrderingState();
 }
 
 PizzaOrders::PizzaOrders(int orderNumber, const std::string& customerName) 
     : currentState(nullptr), discountStrat(nullptr), orderNum(orderNumber), orderName(customerName) {
+        currentState = new OrderingState();
 }
 
 PizzaOrders::~PizzaOrders() {
     clearOrder();
     // Clean up strategy if it exists
     delete discountStrat;
+    delete currentState;
     // Note: currentState will be managed when State pattern is implemented
 }
 
@@ -285,5 +289,93 @@ void PizzaOrders::displayDiscountInfo() const {
     } else {
         std::cout << "No discount applied" << std::endl;
         std::cout << "Final Total: R" << finalTotal << std::endl;
+    }
+}
+
+// State pattern methods implementation
+void PizzaOrders::setState(OrderState* state) {
+    delete currentState;
+    currentState = state;
+}
+
+OrderState* PizzaOrders::getCurrentState() const {
+    return currentState;
+}
+
+std::string PizzaOrders::getCurrentStateName() const {
+    if (currentState != nullptr) {
+        return currentState->getStateName();
+    }
+    return "Unknown";
+}
+
+std::string PizzaOrders::getAvailableActions() const {
+    if (currentState != nullptr) {
+        return currentState->getAvailableActions();
+    }
+    return "No actions available";
+}
+
+bool PizzaOrders::canModifyOrder() const {
+    if (currentState != nullptr) {
+        return currentState->canModifyOrder();
+    }
+    return false;
+}
+
+void PizzaOrders::displayStateInfo() const {
+    std::cout << "\n--- Order State Information ---" << std::endl;
+    std::cout << "Current State: " << getCurrentStateName() << std::endl;
+    std::cout << "Available Actions: " << getAvailableActions() << std::endl;
+    std::cout << "Can Modify Order: " << (canModifyOrder() ? "Yes" : "No") << std::endl;
+    std::cout << "------------------------------" << std::endl;
+}
+
+// State-delegated operations
+void PizzaOrders::performAddPizza() {
+    if (currentState != nullptr) {
+        currentState->addPizza(this);
+    }
+}
+
+void PizzaOrders::performRemovePizza(int index) {
+    if (currentState != nullptr) {
+        currentState->removePizza(this, index);
+    }
+}
+
+void PizzaOrders::performConfirmOrder() {
+    if (currentState != nullptr) {
+        currentState->confirmOrder(this);
+    }
+}
+
+void PizzaOrders::performCancelOrder() {
+    if (currentState != nullptr) {
+        currentState->cancelOrder(this);
+    }
+}
+
+void PizzaOrders::performPayOrder() {
+    if (currentState != nullptr) {
+        currentState->payOrder(this);
+    }
+}
+
+void PizzaOrders::performPrepareOrder() {
+    if (currentState != nullptr) {
+        currentState->prepareOrder(this);
+    }
+}
+
+void PizzaOrders::performDeliverOrder() {
+    if (currentState != nullptr) {
+        currentState->deliverOrder(this);
+    }
+}
+
+void PizzaOrders::performCompleteOrder() {
+    if (currentState != nullptr) {
+        currentState->completeOrder(this);
     }
 }

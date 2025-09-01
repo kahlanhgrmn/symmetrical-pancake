@@ -4,6 +4,7 @@
 
 // ==================== RegularPrice Strategy ====================
 double RegularPrice::applyDiscount(const PizzaOrders& order) const {
+    (void)order;
     // No discount applied - return 0
     return 0.0;
 }

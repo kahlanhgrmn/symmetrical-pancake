@@ -9,15 +9,15 @@
 #include <vector>
 #include "DiscountStrategy.h"
 
-// Forward declarations for future State and Strategy patterns
+// Forward declarations for State and Strategy patterns
 class OrderState;
 class DiscountStrategy;
 
 class PizzaOrders {
 private:
     std::vector<Pizza*> pizzas;
-    OrderState* currentState;      // Will be implemented later for State pattern
-    DiscountStrategy* discountStrat; // Will be implemented later for Strategy pattern
+    OrderState* currentState;
+    DiscountStrategy* discountStrat;
     int orderNum;
     std::string orderName;
 
@@ -66,9 +66,23 @@ public:
     double getDiscountedTotal() const;
     void displayDiscountInfo() const;
     
-    // Future methods for State pattern (placeholders)
-    // void setState(OrderState* state);
-    // OrderState* getCurrentState() const;
+    // State pattern methods
+    void setState(OrderState* state);
+    OrderState* getCurrentState() const;
+    std::string getCurrentStateName() const;
+    std::string getAvailableActions() const;
+    bool canModifyOrder() const;
+    void displayStateInfo() const;
+    
+    // State-delegated operations
+    void performAddPizza();
+    void performRemovePizza(int index);
+    void performConfirmOrder();
+    void performCancelOrder();
+    void performPayOrder();
+    void performPrepareOrder();
+    void performDeliverOrder();
+    void performCompleteOrder();
 };
 
-#endif
+#endif // PIZZAORDERS_H

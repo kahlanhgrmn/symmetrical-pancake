@@ -211,8 +211,6 @@ Pizza* customizeWithDecorators(Pizza* basePizza) {
     std::cout << "Current Price: R" << basePizza->getPrice() << std::endl;
     
     Pizza* currentPizza = basePizza;
-    bool extraCheese = false;
-    bool stuffedCrust = false;
     
     // Extra Cheese option
     std::cout << "\nWould you like Extra Cheese? (+R" << ExtraCheese::getExtraCheesePrice() << ") (y/n): ";
@@ -221,7 +219,6 @@ Pizza* customizeWithDecorators(Pizza* basePizza) {
     
     if (choice == 'y' || choice == 'Y') {
         currentPizza = new ExtraCheese(currentPizza);
-        extraCheese = true;
         std::cout << "Extra Cheese added!" << std::endl;
         std::cout << "New Price: R" << currentPizza->getPrice() << std::endl;
     }
@@ -232,7 +229,6 @@ Pizza* customizeWithDecorators(Pizza* basePizza) {
     
     if (choice == 'y' || choice == 'Y') {
         currentPizza = new StuffedCrust(currentPizza);
-        stuffedCrust = true;
         std::cout << "Stuffed Crust added!" << std::endl;
         std::cout << "New Price: R" << currentPizza->getPrice() << std::endl;
     }
