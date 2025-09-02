@@ -14,6 +14,8 @@
 #include "Customer.h"
 #include "Website.h"
 #include "ConcreteStates.h"
+#include "DiscountStrategy.h"
+#include "ConcreteStrategy.h"
 #include <iostream>
 #include <vector>
 
@@ -909,6 +911,297 @@ void testMultipleMenusAndObservers() {
     std::cout << "Multiple Menus and Observers test completed!" << std::endl;
 }
 
+// MISSING TEST COVERAGE ANALYSIS
+// ================================
+
+// 1. DISCOUNT STRATEGY PATTERN - COMPLETELY UNTESTED
+// Your PizzaOrders class has extensive discount strategy functionality but no tests
+
+void testDiscountStrategies() {
+    cout << "\n=== Testing Discount Strategies ===" << endl;
+    
+    PizzaOrders order(5001, "Discount Test Customer");
+    order.addPizza(order.createPepperoniPizza());
+    order.addPizza(order.createVegetarianPizza());
+    order.addPizza(order.createMeatLoversPizza());
+    
+    cout << "Base order total: R" << order.getTotalPrice() << endl;
+    
+    // Test RegularPrice (no discount)
+    order.setDiscountStrategy(new RegularPrice());
+    cout << "Regular Price - Discount: R" << order.getDiscountAmount() 
+         << ", Final: R" << order.getDiscountedTotal() << endl;
+    
+    // Test FamilyDiscount
+    order.setDiscountStrategy(new FamilyDiscount());
+    cout << "Family Discount - Discount: R" << order.getDiscountAmount() 
+         << ", Final: R" << order.getDiscountedTotal() << endl;
+    
+    // Test BulkDiscount
+    order.setDiscountStrategy(new BulkDiscount());
+    cout << "Bulk Discount - Discount: R" << order.getDiscountAmount() 
+         << ", Final: R" << order.getDiscountedTotal() << endl;
+    
+    // Test StudentDiscount
+    order.setDiscountStrategy(new StudentDiscount());
+    cout << "Student Discount - Discount: R" << order.getDiscountAmount() 
+         << ", Final: R" << order.getDiscountedTotal() << endl;
+    
+    // Test SeniorDiscount
+    order.setDiscountStrategy(new SeniorDiscount());
+    cout << "Senior Discount - Discount: R" << order.getDiscountAmount() 
+         << ", Final: R" << order.getDiscountedTotal() << endl;
+    
+    // Test LoyaltyDiscount with different tiers
+    for (int tier = 1; tier <= 5; ++tier) {
+        order.setDiscountStrategy(new LoyaltyDiscount(tier));
+        cout << "Loyalty Tier " << tier << " - Discount: R" << order.getDiscountAmount() 
+             << ", Final: R" << order.getDiscountedTotal() << endl;
+    }
+    
+    // Test displayDiscountInfo
+    order.displayDiscountInfo();
+}
+
+void testDiscountEdgeCases() {
+    cout << "\n=== Testing Discount Edge Cases ===" << endl;
+    
+    // Test with empty order
+    PizzaOrders emptyOrder(5002, "Empty Order");
+    emptyOrder.setDiscountStrategy(new FamilyDiscount());
+    cout << "Empty order discount: R" << emptyOrder.getDiscountAmount() << endl;
+    
+    // Test with single pizza (should not qualify for family discount)
+    PizzaOrders singleOrder(5003, "Single Pizza");
+    singleOrder.addPizza(singleOrder.createPepperoniPizza());
+    singleOrder.setDiscountStrategy(new FamilyDiscount());
+    cout << "Single pizza family discount: R" << singleOrder.getDiscountAmount() << endl;
+    
+    // Test loyalty tier bounds
+    LoyaltyDiscount* loyalty = new LoyaltyDiscount(10); // Should cap at 5
+    cout << "Loyalty tier with input 10: " << loyalty->getTier() << endl;
+    
+    loyalty->setTier(-5); // Should set to 1
+    cout << "Loyalty tier with input -5: " << loyalty->getTier() << endl;
+    
+    delete loyalty;
+}
+
+void testDiscountStrategyPolymorphism() {
+    cout << "\n=== Testing Discount Strategy Polymorphism ===" << endl;
+    
+    PizzaOrders order(5004, "Polymorphism Test");
+    order.addPizza(order.createMeatLoversPizza(true, true)); // Expensive pizza
+    order.addPizza(order.createVegetarianDeluxePizza(true, true));
+    
+    // Array of different strategies
+    DiscountStrategy* strategies[] = {
+        new RegularPrice(),
+        new FamilyDiscount(),
+        new BulkDiscount(),
+        new StudentDiscount(),
+        new SeniorDiscount(),
+        new LoyaltyDiscount(3)
+    };
+    
+    for (int i = 0; i < 6; ++i) {
+        order.setDiscountStrategy(strategies[i]);
+        cout << "Strategy: " << strategies[i]->getStrategyName() 
+             << " - Description: " << strategies[i]->getDescription() << endl;
+        cout << "Discount: R" << order.getDiscountAmount() << endl;
+        strategies[i] = nullptr; // Strategy now owned by order
+    }
+}
+
+// 2. STATE PATTERN EDGE CASES - Some missing scenarios
+
+void testStatePatternEdgeCases() {
+    cout << "\n=== Testing State Pattern Edge Cases ===" << endl;
+    
+    // Test state without pizzas
+    PizzaOrders order(6001, "State Edge Case");
+    order.setState(new OrderingState());
+    
+    // Test getAvailableActions and canModifyOrder in all states
+    OrderState* states[] = {
+        new OrderingState(),
+        new ConfirmedState(),
+        new PaidState(),
+        new PreparingState(),
+        new DeliveringState(),
+        new CompletedState(),
+        new CancelledState()
+    };
+    
+    for (int i = 0; i < 7; ++i) {
+        order.setState(states[i]);
+        cout << "State: " << order.getCurrentStateName() << endl;
+        cout << "Can modify: " << order.canModifyOrder() << endl;
+        cout << "Actions: " << order.getAvailableActions() << endl;
+        states[i] = nullptr; // State now owned by order
+    }
+}
+
+// 3. PIZZAORDERS FUNCTIONALITY - Missing tests
+
+void testPizzaOrdersGetters() {
+    cout << "\n=== Testing PizzaOrders Getters ===" << endl;
+    
+    PizzaOrders order(7001, "Getter Test");
+    Pizza* pizza1 = order.createPepperoniPizza();
+    Pizza* pizza2 = order.createVegetarianPizza();
+    
+    order.addPizza(pizza1);
+    order.addPizza(pizza2);
+    
+    // Test getPizzas() method
+    auto pizzaVector = order.getPizzas();
+    cout << "getPizzas() returned " << pizzaVector.size() << " pizzas" << endl;
+    
+    // Test getDiscountStrategy() when null
+    cout << "Discount strategy when null: " << (order.getDiscountStrategy() == nullptr ? "nullptr" : "not null") << endl;
+    
+    // Test getDiscountStrategy() when set
+    order.setDiscountStrategy(new FamilyDiscount());
+    cout << "Discount strategy when set: " << (order.getDiscountStrategy() != nullptr ? "not null" : "nullptr") << endl;
+}
+
+// 4. COMPOSITE PATTERN - Missing deep nesting tests
+
+void testDeepComposition() {
+    cout << "\n=== Testing Deep Composition Nesting ===" << endl;
+    
+    // Create deeply nested structure
+    ToppingGroup* level1 = new ToppingGroup("Level 1");
+    ToppingGroup* level2 = new ToppingGroup("Level 2");
+    ToppingGroup* level3 = new ToppingGroup("Level 3");
+    ToppingGroup* level4 = new ToppingGroup("Level 4");
+    
+    level4->addComponent(new Topping("Deep Topping"));
+    level3->addComponent(level4);
+    level2->addComponent(level3);
+    level1->addComponent(level2);
+    level1->addComponent(new Topping("Surface Topping"));
+    
+    cout << "Deep composition price: R" << level1->getPrice() << endl;
+    cout << "Deep composition component count: " << level1->getComponentCount() << endl;
+    
+    delete level1; // Should cascade delete all levels
+}
+
+// 5. MEMORY MANAGEMENT - Missing destructor behavior tests
+
+void testMemoryManagement() {
+    cout << "\n=== Testing Memory Management ===" << endl;
+    
+    // Test PizzaOrders destructor with strategies
+    {
+        PizzaOrders order(8001, "Memory Test");
+        order.addPizza(order.createPepperoniPizza());
+        order.setDiscountStrategy(new BulkDiscount());
+        // Order should clean up pizza and strategy when destroyed
+    }
+    cout << "PizzaOrders with strategy destroyed" << endl;
+    
+    // Test assignment operator with strategies
+    {
+        PizzaOrders order1(8002, "Original");
+        order1.addPizza(order1.createVegetarianPizza());
+        order1.setDiscountStrategy(new StudentDiscount());
+        
+        PizzaOrders order2(8003, "Copy");
+        order2.addPizza(order2.createMeatLoversPizza());
+        order2.setDiscountStrategy(new FamilyDiscount());
+        
+        order2 = order1; // Should clean up order2's original strategy and pizzas
+        cout << "Assignment with strategies completed" << endl;
+    }
+}
+
+// 6. DECORATOR PATTERN - Missing null pointer tests
+
+void testDecoratorNullHandling() {
+    cout << "\n=== Testing Decorator Null Handling ===" << endl;
+    
+    // Test decorators with null pizza (should not crash)
+    try {
+        ExtraCheese* decorator1 = new ExtraCheese(nullptr);
+        cout << "ExtraCheese with null: " << decorator1->getName() << endl;
+        delete decorator1;
+        
+        StuffedCrust* decorator2 = new StuffedCrust(nullptr);
+        cout << "StuffedCrust with null: " << decorator2->getName() << endl;
+        delete decorator2;
+    } catch (const std::exception& e) {
+        cout << "Exception caught: " << e.what() << endl;
+    }
+}
+
+// 7. OBSERVER PATTERN - Missing notification content tests
+
+void testObserverNotificationContent() {
+    cout << "\n=== Testing Observer Notification Content ===" << endl;
+    
+    PizzaMenu* menu = new PizzaMenu("Content Test Menu");
+    Customer* customer = new Customer("Content Test Customer");
+    
+    menu->addObserver(customer);
+    
+    Pizza* pizza = new BasePizza(ToppingGroup::createPepperoniPizza());
+    menu->addPizza(pizza);
+    
+    // Test notification content
+    auto notifications = customer->getNotifications();
+    cout << "Number of notifications: " << notifications.size() << endl;
+    
+    if (!notifications.empty()) {
+        cout << "First notification: " << notifications[0] << endl;
+    }
+    
+    delete menu;
+    delete customer;
+}
+
+// 8. STATIC METHODS - Missing comprehensive static method tests
+
+void testStaticMethods() {
+    cout << "\n=== Testing Static Methods ===" << endl;
+    
+    // Test ExtraCheese and StuffedCrust static price methods
+    cout << "ExtraCheese static price: R" << ExtraCheese::getExtraCheesePrice() << endl;
+    cout << "StuffedCrust static price: R" << StuffedCrust::getStuffedCrustPrice() << endl;
+    
+    // Test Topping static methods more thoroughly
+    cout << "All toppings count: " << Topping::getAllToppings().size() << endl;
+    
+    // Test edge cases for isValidTopping
+    cout << "Empty string valid: " << Topping::isValidTopping("") << endl;
+    cout << "Null check (spaces): " << Topping::isValidTopping("   ") << endl;
+    cout << "Case sensitive: " << Topping::isValidTopping("pepperoni") << endl; // lowercase
+}
+
+// Main function to run all missing tests
+void runMissingTests() {
+    cout << "\n" << string(60, '=') << endl;
+    cout << "        RUNNING MISSING TEST COVERAGE" << endl;
+    cout << string(60, '=') << endl;
+    
+    testDiscountStrategies();
+    testDiscountEdgeCases();
+    testDiscountStrategyPolymorphism();
+    testStatePatternEdgeCases();
+    testPizzaOrdersGetters();
+    testDeepComposition();
+    testMemoryManagement();
+    testDecoratorNullHandling();
+    testObserverNotificationContent();
+    testStaticMethods();
+    
+    cout << "\n" << string(60, '=') << endl;
+    cout << "        MISSING TESTS COMPLETED" << endl;
+    cout << string(60, '=') << endl;
+}
+
 void testObserverPatternWithPizzaOrders() {
     std::cout << "\n=== Testing Observer Pattern Integration with PizzaOrders ===" << std::endl;
     
@@ -956,7 +1249,371 @@ void testObserverPatternWithPizzaOrders() {
 }
 // Add these functions to your PizzaOrders.cpp file or create a separate test file
 
+// Additional test functions to improve coverage for Topping and ToppingGroup classes
 
+void testToppingAssignmentOperator() {
+    cout << "\n=== Testing Topping Assignment Operator ===" << endl;
+    
+    // Create two toppings
+    Topping topping1("Pepperoni");
+    Topping topping2("Mushrooms");
+    
+    cout << "Before assignment:" << endl;
+    cout << "Topping1: " << topping1.getName() << " - R" << topping1.getPrice() << endl;
+    cout << "Topping2: " << topping2.getName() << " - R" << topping2.getPrice() << endl;
+    
+    // Test assignment operator (if it exists)
+    topping2 = topping1;
+    
+    cout << "After assignment:" << endl;
+    cout << "Topping1: " << topping1.getName() << " - R" << topping1.getPrice() << endl;
+    cout << "Topping2: " << topping2.getName() << " - R" << topping2.getPrice() << endl;
+    
+    cout << endl;
+}
+
+void testToppingGroupAssignmentOperator() {
+    cout << "\n=== Testing ToppingGroup Assignment Operator ===" << endl;
+    
+    // Create two topping groups
+    ToppingGroup group1("First Group");
+    group1.addComponent(new Topping("Pepperoni"));
+    group1.addComponent(new Topping("Mushrooms"));
+    
+    ToppingGroup group2("Second Group");
+    group2.addComponent(new Topping("Cheese"));
+    
+    cout << "Before assignment:" << endl;
+    cout << "Group1: " << group1.getName() << " - R" << group1.getPrice() << endl;
+    cout << "Group2: " << group2.getName() << " - R" << group2.getPrice() << endl;
+    
+    // Test assignment operator
+    group2 = group1;
+    
+    cout << "After assignment:" << endl;
+    cout << "Group1: " << group1.getName() << " - R" << group1.getPrice() << endl;
+    cout << "Group2: " << group2.getName() << " - R" << group2.getPrice() << endl;
+    
+    // Test independence after assignment
+    group1.addComponent(new Topping("Olives"));
+    cout << "After adding to group1:" << endl;
+    cout << "Group1 components: " << group1.getComponentCount() << endl;
+    cout << "Group2 components: " << group2.getComponentCount() << endl;
+    
+    cout << endl;
+}
+
+void testToppingGroupSelfAssignment() {
+    cout << "\n=== Testing ToppingGroup Self-Assignment ===" << endl;
+    
+    ToppingGroup group("Self Assignment Test");
+    group.addComponent(new Topping("Pepperoni"));
+    group.addComponent(new Topping("Mushrooms"));
+    
+    cout << "Before self-assignment:" << endl;
+    cout << "Components: " << group.getComponentCount() << endl;
+    cout << "Price: R" << group.getPrice() << endl;
+    
+    // Test self-assignment
+    group = group;
+    
+    cout << "After self-assignment:" << endl;
+    cout << "Components: " << group.getComponentCount() << endl;
+    cout << "Price: R" << group.getPrice() << endl;
+    cout << "Name: " << group.getName() << endl;
+    
+    cout << endl;
+}
+
+void testToppingGroupClearComponents() {
+    cout << "\n=== Testing ToppingGroup clearComponents ===" << endl;
+    
+    ToppingGroup group("Clear Test");
+    group.addComponent(new Topping("Pepperoni"));
+    group.addComponent(new Topping("Mushrooms"));
+    group.addComponent(new Topping("Cheese"));
+    
+    cout << "Before clearing:" << endl;
+    cout << "Components: " << group.getComponentCount() << endl;
+    cout << "Price: R" << group.getPrice() << endl;
+    cout << "Is empty? " << (group.isEmpty() ? "Yes" : "No") << endl;
+    
+    // Clear all components
+    group.clearComponents();
+    
+    cout << "After clearing:" << endl;
+    cout << "Components: " << group.getComponentCount() << endl;
+    cout << "Price: R" << group.getPrice() << endl;
+    cout << "Is empty? " << (group.isEmpty() ? "Yes" : "No") << endl;
+    cout << "Name: " << group.getName() << endl;
+    
+    cout << endl;
+}
+
+void testToppingGroupRemoveComponent() {
+    cout << "\n=== Testing ToppingGroup removeComponent ===" << endl;
+    
+    ToppingGroup group("Remove Test");
+    Topping* pepperoni = new Topping("Pepperoni");
+    Topping* mushrooms = new Topping("Mushrooms");
+    Topping* cheese = new Topping("Cheese");
+    
+    group.addComponent(pepperoni);
+    group.addComponent(mushrooms);
+    group.addComponent(cheese);
+    
+    cout << "Initial state:" << endl;
+    cout << "Components: " << group.getComponentCount() << endl;
+    cout << "Price: R" << group.getPrice() << endl;
+    
+    // Remove existing component
+    bool removed = group.removeComponent(mushrooms);
+    cout << "Removing mushrooms: " << (removed ? "Success" : "Failed") << endl;
+    cout << "Components after removal: " << group.getComponentCount() << endl;
+    cout << "Price after removal: R" << group.getPrice() << endl;
+    delete mushrooms; // Clean up removed component
+    
+    // Try to remove non-existent component
+    Topping* nonExistent = new Topping("Olives");
+    removed = group.removeComponent(nonExistent);
+    cout << "Removing non-existent component: " << (removed ? "Success" : "Failed") << endl;
+    delete nonExistent;
+    
+    // Try to remove nullptr
+    removed = group.removeComponent(nullptr);
+    cout << "Removing nullptr: " << (removed ? "Success" : "Failed") << endl;
+    
+    cout << endl;
+}
+
+void testToppingGroupAddNullComponent() {
+    cout << "\n=== Testing ToppingGroup addComponent with nullptr ===" << endl;
+    
+    ToppingGroup group("Null Test");
+    
+    cout << "Initial components: " << group.getComponentCount() << endl;
+    
+    // Try to add nullptr
+    group.addComponent(nullptr);
+    
+    cout << "After adding nullptr: " << group.getComponentCount() << endl;
+    cout << "Price: R" << group.getPrice() << endl;
+    cout << "Is empty? " << (group.isEmpty() ? "Yes" : "No") << endl;
+    
+    // Add valid component
+    group.addComponent(new Topping("Cheese"));
+    cout << "After adding valid component: " << group.getComponentCount() << endl;
+    
+    cout << endl;
+}
+
+void testToppingGroupGetComponents() {
+    cout << "\n=== Testing ToppingGroup getComponents ===" << endl;
+    
+    ToppingGroup group("Components Test");
+    group.addComponent(new Topping("Pepperoni"));
+    group.addComponent(new Topping("Mushrooms"));
+    group.addComponent(new Topping("Cheese"));
+    
+    // Get components vector
+    const std::vector<PizzaComponent*>& components = group.getComponents();
+    
+    cout << "Components via getComponents():" << endl;
+    for (size_t i = 0; i < components.size(); ++i) {
+        cout << "Component " << i << ": " << components[i]->getName() 
+             << " - R" << components[i]->getPrice() << endl;
+    }
+    
+    cout << "Vector size: " << components.size() << endl;
+    cout << "Group component count: " << group.getComponentCount() << endl;
+    
+    cout << endl;
+}
+
+void testNestedToppingGroupCopy() {
+    cout << "\n=== Testing Nested ToppingGroup Copy Constructor ===" << endl;
+    
+    // Create complex nested structure
+    ToppingGroup* outerGroup = new ToppingGroup("Outer Group");
+    
+    ToppingGroup* innerGroup1 = new ToppingGroup("Inner Group 1");
+    innerGroup1->addComponent(new Topping("Pepperoni"));
+    innerGroup1->addComponent(new Topping("Mushrooms"));
+    
+    ToppingGroup* innerGroup2 = new ToppingGroup("Inner Group 2");
+    innerGroup2->addComponent(new Topping("Cheese"));
+    innerGroup2->addComponent(new Topping("Olives"));
+    
+    outerGroup->addComponent(innerGroup1);
+    outerGroup->addComponent(innerGroup2);
+    outerGroup->addComponent(new Topping("Extra Topping"));
+    
+    cout << "Original nested group:" << endl;
+    cout << "Name: " << outerGroup->getName() << endl;
+    cout << "Components: " << outerGroup->getComponentCount() << endl;
+    cout << "Price: R" << outerGroup->getPrice() << endl;
+    
+    // Test copy constructor with nested structure
+    ToppingGroup copiedGroup(*outerGroup);
+    
+    cout << "Copied nested group:" << endl;
+    cout << "Name: " << copiedGroup.getName() << endl;
+    cout << "Components: " << copiedGroup.getComponentCount() << endl;
+    cout << "Price: R" << copiedGroup.getPrice() << endl;
+    
+    // Delete original and test if copy is still valid
+    delete outerGroup;
+    
+    cout << "After deleting original:" << endl;
+    cout << "Copied group name: " << copiedGroup.getName() << endl;
+    cout << "Copied group price: R" << copiedGroup.getPrice() << endl;
+    
+    cout << endl;
+}
+
+void testToppingStaticMethods() {
+    cout << "\n=== Testing Topping Static Methods Thoroughly ===" << endl;
+    
+    // Test isValidTopping with various inputs
+    vector<string> testToppings = {
+        "Pepperoni", "Mushrooms", "Cheese", "Dough",
+        "InvalidTopping", "", "PEPPERONI", "pepperoni",
+        "Tomato Sauce", "Green Peppers", "Beef Sausage"
+    };
+    
+    cout << "Testing isValidTopping:" << endl;
+    for (const string& topping : testToppings) {
+        bool isValid = Topping::isValidTopping(topping);
+        cout << "'" << topping << "': " << (isValid ? "Valid" : "Invalid") << endl;
+    }
+    
+    cout << "\nTesting getAllToppings:" << endl;
+    auto allToppings = Topping::getAllToppings();
+    cout << "Total available toppings: " << allToppings.size() << endl;
+    
+    // Verify the map is not empty and contains expected toppings
+    cout << "Sample toppings from map:" << endl;
+    int count = 0;
+    for (const auto& pair : allToppings) {
+        cout << pair.first << ": R" << pair.second << endl;
+        if (++count >= 5) break; // Show first 5 only
+    }
+    
+    cout << endl;
+}
+
+void testToppingEdgeCases() {
+    cout << "\n=== Testing Topping Edge Cases ===" << endl;
+    
+    // Test empty string topping
+    Topping emptyTopping("");
+    cout << "Empty string topping:" << endl;
+    cout << "Name: '" << emptyTopping.getName() << "'" << endl;
+    cout << "Price: R" << emptyTopping.getPrice() << endl;
+    
+    // Test whitespace topping
+    Topping whitespaceTopping("   ");
+    cout << "Whitespace topping:" << endl;
+    cout << "Name: '" << whitespaceTopping.getName() << "'" << endl;
+    cout << "Price: R" << whitespaceTopping.getPrice() << endl;
+    
+    // Test very long topping name
+    string longName(1000, 'A');
+    Topping longTopping(longName);
+    cout << "Long name topping (length " << longName.length() << "):" << endl;
+    cout << "Name length: " << longTopping.getName().length() << endl;
+    cout << "Price: R" << longTopping.getPrice() << endl;
+    
+    cout << endl;
+}
+
+void testEmptyToppingGroupOperations() {
+    cout << "\n=== Testing Empty ToppingGroup Operations ===" << endl;
+    
+    ToppingGroup emptyGroup("Empty Group");
+    
+    cout << "Empty group operations:" << endl;
+    cout << "Name: " << emptyGroup.getName() << endl;
+    cout << "Price: R" << emptyGroup.getPrice() << endl;
+    cout << "Component count: " << emptyGroup.getComponentCount() << endl;
+    cout << "Is empty: " << (emptyGroup.isEmpty() ? "Yes" : "No") << endl;
+    
+    // Test operations on empty group
+    const vector<PizzaComponent*>& components = emptyGroup.getComponents();
+    cout << "Components vector size: " << components.size() << endl;
+    
+    // Try to remove from empty group
+    bool removed = emptyGroup.removeComponent(nullptr);
+    cout << "Remove from empty group: " << (removed ? "Success" : "Failed") << endl;
+    
+    // Clear empty group
+    emptyGroup.clearComponents();
+    cout << "After clearing empty group - still empty: " << (emptyGroup.isEmpty() ? "Yes" : "No") << endl;
+    
+    cout << endl;
+}
+
+void testFactoryMethodsDetailedOutput() {
+    cout << "\n=== Testing Factory Methods with Detailed Output ===" << endl;
+    
+    vector<ToppingGroup*> factoryPizzas = {
+        ToppingGroup::createPepperoniPizza(),
+        ToppingGroup::createVegetarianPizza(),
+        ToppingGroup::createMeatLoversPizza(),
+        ToppingGroup::createVegetarianDeluxePizza()
+    };
+    
+    vector<string> pizzaNames = {
+        "Pepperoni", "Vegetarian", "Meat Lovers", "Vegetarian Deluxe"
+    };
+    
+    for (size_t i = 0; i < factoryPizzas.size(); ++i) {
+        cout << pizzaNames[i] << " Pizza Details:" << endl;
+        cout << "  Full Name: " << factoryPizzas[i]->getName() << endl;
+        cout << "  Total Price: R" << factoryPizzas[i]->getPrice() << endl;
+        cout << "  Component Count: " << factoryPizzas[i]->getComponentCount() << endl;
+        cout << "  Is Empty: " << (factoryPizzas[i]->isEmpty() ? "Yes" : "No") << endl;
+        
+        // Show components breakdown
+        const auto& components = factoryPizzas[i]->getComponents();
+        cout << "  Components:" << endl;
+        for (size_t j = 0; j < components.size(); ++j) {
+            cout << "    " << j+1 << ". " << components[j]->getName() 
+                 << " (R" << components[j]->getPrice() << ")" << endl;
+        }
+        cout << endl;
+        
+        delete factoryPizzas[i];
+    }
+}
+
+// Main function to run all additional tests
+void runAdditionalCoverageTests() {
+    cout << "\n" << string(60, '=') << endl;
+    cout << "    ADDITIONAL COVERAGE TESTS FOR TOPPING & TOPPINGGROUP" << endl;
+    cout << string(60, '=') << endl;
+    
+    try {
+        testToppingAssignmentOperator();
+        testToppingGroupAssignmentOperator();
+        testToppingGroupSelfAssignment();
+        testToppingGroupClearComponents();
+        testToppingGroupRemoveComponent();
+        testToppingGroupAddNullComponent();
+        testToppingGroupGetComponents();
+        testNestedToppingGroupCopy();
+        testToppingStaticMethods();
+        testToppingEdgeCases();
+        testEmptyToppingGroupOperations();
+        testFactoryMethodsDetailedOutput();
+        
+        cout << "\n" << string(60, '=') << endl;
+        cout << "    ALL ADDITIONAL COVERAGE TESTS COMPLETED SUCCESSFULLY" << endl;
+        cout << string(60, '=') << endl;
+    } catch (const exception& e) {
+        cerr << "Error during additional testing: " << e.what() << endl;
+    }
+}
 
 
 // Test function 1: Complete order workflow
@@ -1256,6 +1913,11 @@ cout << "Romeo's Pizza - Complete System Testing" << endl;
         // === INTEGRATION TESTS ===
         testCompositeDecoratorIntegration();
         testPizzaOrdersIntegration();
+        
+
+         runAdditionalCoverageTests();
+         runMissingTests();
+
         
         cout << "=========================================" << endl;
         cout << "All automated tests completed successfully!" << endl;
